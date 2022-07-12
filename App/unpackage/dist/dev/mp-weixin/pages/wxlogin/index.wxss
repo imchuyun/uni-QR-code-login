@@ -1,0 +1,38 @@
+
+.login {
+	border-radius: 10px;
+	background: #10c62b;
+	width: 250px;
+	color: #FFFFFF;
+	font-size: 15px;
+}
+.login1 {
+	border-radius: 10px;
+	background: #FFFFFF;
+	width: 250px;
+	color: #10c62b;
+	font-size: 15px;
+	border-width: thin;
+	border-style: solid;
+	border-color: #10c62b;
+}
+.content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+.text-area {
+	justify-content: center;
+	top: 30%;
+	position: absolute;
+}
+.title {
+	font-size: 36rpx;
+	color: #8f8f94;
+}
+.title-a {
+	font-size: 25px;
+	font-weight: 100;
+}
+
