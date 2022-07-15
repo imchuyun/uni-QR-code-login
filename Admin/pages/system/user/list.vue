@@ -165,7 +165,13 @@
 				noAppidWhatShouldIDoLink: 'https://uniapp.dcloud.net.cn/uniCloud/uni-id?id=makeup-dcloud-appid'
 			}
 		},
-		onLoad() {
+		onLoad: function(option) {
+			console.log(option.type);
+			if(option.type=="login"){
+				uni.reLaunch({
+					url: '/pages/index/index'
+				});
+			}
 			this._filter = {}
 		},
 		onReady() {

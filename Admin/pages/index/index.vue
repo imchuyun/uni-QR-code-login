@@ -22,7 +22,20 @@
 		watch: {
 
 		},
-		onLoad() {},
+		onLoad: function(option) {
+		},
+		// methods: {
+		// 	onLoad() {
+		// 		this.data()
+		// 	},
+		// 	data() {
+		// 		console.log("hello")
+		// 	}
+		// },
+		onTabItemTap(e) {
+			// tab 点击时执行，此处直接接收单击事件
+			console.log(e)
+		}
 	}
 </script>
 

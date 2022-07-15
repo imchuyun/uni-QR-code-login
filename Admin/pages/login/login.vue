@@ -44,7 +44,7 @@
 								</view>
 							</uni-forms>
 							<view class="uni-tips">
-								<text class="uni-tips-text" @click="initAdmin">{{$t('login.text.prompt')}}...</text>
+								<text class="uni-tips-text" @click="initAdmin">如遇密码忘记，请点击这里</text>
 							</view>
 						</view>
 						<view v-show="current === 1">
@@ -54,7 +54,7 @@
 							</view>
 
 							<view class="content_code" v-show="load === 1">
-								<image src="/static/icode.png" mode="" class="image"></image>
+								<image src="/static/icode.png" class="image" mode='widthFix'></image>
 							</view>
 
 							<view @click="refresh" class="content_code">
@@ -113,7 +113,7 @@
 				intervalID: 0,
 				load: 0,
 				state: '',
-				code: '',
+				code: '/static/load.gif',
 				item1: [],
 				accountID: '',
 				current: 0,
@@ -185,10 +185,13 @@
 		},
 
 		methods: {
+			messageToggle(type, msg) {
+				this.msgType = type
+				this.messageText = msg
+				this.$refs.message.open()
+			},
 			refresh() {
-				uni.navigateTo({
-					url: '/pages/login/login?s=wechat'
-				})
+				return window.location.href = "/pages/login/login";
 			},
 			update() {
 				this.$forceUpdate()
@@ -351,6 +354,10 @@
 			run() {
 				console.log("微信登录检测开始");
 				console.log(this.accountID);
+				var _self = this;
+				let src1 = "/static/icode.png";
+				let src2 = "/static/fail.png";
+				var lid = uni.getStorageSync('lid');
 				uniCloud.callFunction({
 					name: 'wxlogin_client',
 					data: {
@@ -361,49 +368,131 @@
 						console.log(res.result.data[0])
 						if (res.result.data[0].state == 1) {
 							console.log("已扫描");
-							uni.showModal({
-								title: '请在小程序上确认登录',
-								showCancel: false
-							});
-							this.code = "/static/icode.png"
+							_self.code = src1;
 							this.load = 1
 							console.log(this.code);
 							console.log(this.load);
 
 						} else {
-							if (!res.result.data[0].wx_unid == "") {
-								console.log("微信登录成功");
-								uniCloud.callFunction({
-									name: 'user-center',
-									data: {
-										uid: "61aa25be3976eb00014da677"
-									},
-									fail: res => {
-										console.log(res);
-									},
-									success(res) {
-										console.log(res)
-										if (res.result.token !== null) {
-											uni.setStorageSync('uni_id_token', res.result.token);
-											uni.setStorageSync('token', res.result.token);
-											uni.setStorageSync('uni_id_token_expired', res.result
-												.tokenExpired);
-											console.log(res.result.token);
-											console.log("登录成功");
-											console.log("清理" + uni.getStorageSync("intervalID"))
+							if (!res.result.data.length == 0) {
+								if (!res.result.data[0].wx_unid == "") {
+
+									console.log("微信登录成功");
+
+									let wxunid = res.result.data[0].wx_unid;
+									uniCloud.callFunction({
+										name: 'user_bind',
+										data: {
+											wxunid: wxunid,
+											state: "1",
+											admin: true
+										},
+										fail: res => {
+											console.log(res);
+										},
+										success(res) {
+											console.log(res)
+											if (!res.result.data.length == 0) {
+												var userid = res.result.data[0].userid
+												uni.setStorageSync('userid', userid)
+												console.log(uni.getStorageSync('userid'))
+												uniCloud.callFunction({
+													name: 'user-center',
+													data: {
+														uid: uni.getStorageSync('userid'),
+														test:"test"
+													},
+													fail: res => {
+														console.log(res);
+													},
+													success(res) {
+														console.log(res)
+														if (res.result == 0) {
+															console.log("账号不存在");
+															var _self = this;
+															let src2 = "/static/fail.png";
+															_self.code = src2;
+															uni.showToast({
+																icon: 'none',
+																title: '账号不存在',
+																duration: 10000
+															});
+
+															console.log("清理" + lid)
+															console.log("微信登录检测关闭");
+															uni.setStorageSync('lid', 0)
+															clearInterval(lid);
+														} else {
+															if (res.result.token !== null) {
 
 
-											uni.navigateTo({
-												url: '/pages/index/index'
-											})
-											clearInterval(uni.getStorageSync("intervalID"));
+																uni.setStorageSync('uni_id_token',
+																	res
+																	.result.token);
+																uni.setStorageSync('token', res
+																	.result
+																	.token);
+																uni.setStorageSync(
+																	'uni_id_token_expired',
+																	res.result
+																	.tokenExpired);
+																console.log(res.result.token);
+																console.log("登录成功");
+																uni.showToast({
+																	icon: 'success',
+																	title: '登录成功',
+																	duration: 3000
+																});
 
+																console.log("清理" + lid)
+																console.log("微信登录检测关闭");
+																uni.setStorageSync('lid', 0)
+																clearInterval(lid);
+
+																// uni.navigateTo({
+																// 	url: '/pages/index/index'
+																// })
+
+																// uni.reLaunch({
+																// 	url: '/pages/system/user/list?type=login',
+																// 	success() {
+																// 		let page = getCurrentPages().pop(); //跳转页面成功之后
+																// 		if (!page) return;
+																// 	}
+																// });
+
+
+																return window.location.href = "/pages/index/index";
+															}
+														}
+													}
+												});
+
+											} else {
+												console.log("该微信暂无绑定后台账号，请先绑定");
+												var _self = this;
+												let src2 = "/static/fail.png";
+												_self.code = src2;
+												uni.showToast({
+													icon: 'none',
+													title: '该微信暂无绑定后台账号，请先绑定',
+													duration: 10000
+												});
+
+												console.log("清理" + lid)
+												console.log("微信登录检测关闭");
+												uni.setStorageSync('lid', 0)
+												clearInterval(lid);
+											}
 										}
-									}
-								});
+									})
 
 
+
+
+								}
 							}
+
 						}
 
 					},
@@ -411,6 +500,11 @@
 						console.log(e);
 					}
 				});
+
+			},
+			adminlog(userid) {
+
+
 
 			},
 			btnwx() {
@@ -430,8 +524,8 @@
 				this.$refs.form.submit()
 			},
 			onLoad() {
-				uni.removeStorageSync("intervalID")
 				this.loaddata();
+				uni.setStorageSync('lid', 0);
 
 			},
 			reload: function() {
@@ -476,24 +570,29 @@
 			onClickItem(e) {
 
 				this.current = e.currentIndex;
+				var _self = this;
 				if (e.currentIndex == 1) {
-					console.log(this.intervalID);
-					if (this.intervalID == 0) {
-						this.intervalID = setInterval(this.run, 5000);
-						//console.log("intervalID" + this.intervalID)
-						uni.setStorageSync("intervalID", this.intervalID)
+					console.log(uni.getStorageSync('lid'));
+
+					if (uni.getStorageSync('lid') == 0) {
+
+						let lid
+						lid = setInterval(this.run, 5000);
+						_self.intervalID = lid;
+						uni.setStorageSync('lid', lid);
+						console.log("intervalID:" + uni.getStorageSync('lid'))
 					}
 				}
 				if (e.currentIndex == 0) {
-					clearInterval(this.intervalID);
-					this.intervalID = 0
+					var _self = this;
+
+					clearInterval(uni.getStorageSync('lid'));
+					uni.setStorageSync('lid', 0);
 					console.log("微信登录检测关闭");
 				}
 			},
 			initAdmin() {
-				uni.redirectTo({
-					url: '/pages/demo/init/init'
-				})
+				return window.location.href = 'https://www.6661314.xyz/'
 			},
 			changePassword: function() {
 				this.showPassword = !this.showPassword;
@@ -513,7 +612,7 @@
 		height: 100%;
 		display: flex;
 		justify-content: center;
-		background-image: url(../../static/background.jpg);
+		background-image: url(../../static/bg.svg);
 		background-repeat: no-repeat;
 		-moz-background-size: 100% 100%;
 
